@@ -20,7 +20,7 @@ DataPath = osp.join(parent_path, 'data')
 
 DoorPath = osp.join(DataPath, 'query', 'door_RGB.png' )
 ScenePath = osp.join(DataPath, 'scene', 'scene_RGB.png' )
-
+ScenePath_video = osp.join(DataPath, 'scene', 'scene_video.mp4' )
 
 
 # ================================================================= #
@@ -87,6 +87,7 @@ if __name__ == '__main__':
     
     door_query = cv2.imread(DoorPath, cv2.IMREAD_GRAYSCALE)
     scene_img = cv2.imread(ScenePath, cv2.IMREAD_GRAYSCALE)
+    vs = cv2.VideoCapture(ScenePath_video)
 
 
     if door_query  is None: 
@@ -111,6 +112,42 @@ if __name__ == '__main__':
     cv2.imshow("Query", door_area)
     cv2.imshow("Scene", scene_img )
     cv2.imshow("homography", img3)
+
+
+
+    """ Apply to video 
+    """
+    if (vs.isOpened() == False):
+        print("opening video stream failed.")    
+        sys.exit()
+    
+    while True: 
+        vs_frame = vs.read()
+        vs_frame = vs_frame[1] # grab the next frame if we are reading from Videocapture 
+
+        frame = cv2.cvtColor(vs_frame, cv2.COLOR_BGR2GRAY) 
+
+        homo_vs = feature_matching(door_area, frame)
+
+        cv2.imshow("video", homo_vs)
+
+        key = cv2.waitKey(1)
+
+        if key == 27:
+            break
+
+        
+
+
+
+
+
+
+
+
+
+
+
     cv2.waitKey()
     cv2.destroyAllWindows()
 
