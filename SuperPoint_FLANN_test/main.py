@@ -191,7 +191,7 @@ if __name__ == "__main__":
     """
     img0 = cv2.imread(osp.join("data", "door_query.png"))
     img1 = cv2.imread(osp.join("data", "scene_RGB.png"))
-
+    
 
     kptdescs = {}
     imgs = {}
