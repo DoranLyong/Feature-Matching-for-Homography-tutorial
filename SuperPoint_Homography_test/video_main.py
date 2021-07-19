@@ -98,7 +98,7 @@ if __name__ == '__main__':
 
     """ Image loader 
     """
-    Q_img = cv2.imread(osp.join("data", "door_query.png"))
+    Q_img = cv2.imread(osp.join("data", "door_query2.png"))
     G_vs = cv2.VideoCapture(osp.join("data", "door_video.mp4"))    
 
 
@@ -116,5 +116,95 @@ if __name__ == '__main__':
     if (G_vs.isOpened() == False):
         print("opening video stream failed.")    
         sys.exit()
-  
+
+    while True: 
+        G_img = G_vs.read()
+        G_img = G_img[1]  # grab the next frame if we are reading from Videocapture         
+
+        if G_img is None:  # if we are viewing a video and we didn't grab a frame then we have reached the end of the video
+            break         
+
+        imgs['cur']  = G_img
+        kptdescs['cur'] = detector(G_img)
+        kp2, des2 = kptdescs['cur']['keypoints'], kptdescs['cur']['descriptors']
+
+
+
+        """ FLANN matching 
+        """
+        FLANN_INDEX_KDTREE = 0
+        index_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 5)
+        search_params = dict(checks = 50)
+
+        flann = cv2.FlannBasedMatcher(index_params, search_params)
+
+        matches = flann.knnMatch(des1, des2, k=2)  # feature matcher 
+
+
+        """ store all good matches 
+        """
+        good_points = [] 
+        for m,n in matches:
+            if m.distance < 0.75 * n.distance :
+                """ append the points according to distnace of descriptors 
+                """
+                good_points.append(m)
+
+
+        """ Find Homography 
+        """
+        MIN_MATCH_COUNT = 10
+        print(f"Good match points: {len(good_points)}")
+
+        if len(good_points) > MIN_MATCH_COUNT:
+            query_pts = np.float32([ kp1[m.queryIdx] for m in good_points]).reshape(-1, 1, 2)
+            gallery_pts = np.float32([ kp2[m.trainIdx] for m in good_points]).reshape(-1, 1, 2)   
+
+            Matrix , mask = cv2.findHomography(query_pts, gallery_pts, cv2.RANSAC, 5.0  )  # finding perspective transformation 
+                                                                                      # between two planes 
+            matches_mask = mask.ravel().tolist()         
+
+
+
+            h, w = Q_img.shape[:2]    
+
+            pts = np.float32(  [ [0, 0] , 
+                                 [0, h] , 
+                                 [w, h] , 
+                                 [w, 0] ,
+                                ]).reshape(-1, 1, 2) # saving all points in pts 
+
+            dst = cv2.perspectiveTransform(pts, Matrix) # applying perspective algorithm 
+
+
+            """ See the output 
+            """                
+            homography = cv2.polylines(G_img, [np.int32(dst)], True, (255, 0, 0), 3) 
+
+            cv2.imshow("Homography", homography)
+
+
+
+            matching_img = plot_matches(Q_img, G_img,
+                                        kp1, kp2, 
+                                        )
+
+            cv2.imshow("matching", matching_img )
+
+
+            cv2.waitKey(0)
+
+
+        else: 
+            print("Not enough matches are found - %d/%d" %(len(good_points), MIN_MATCH_COUNT))
+            matches_mask= None             
+
+    
+
+
+
+        key = cv2.waitKey(1)
+
+        if key == 27: # _Press ESC on keyboard to exit 
+            break        
     
