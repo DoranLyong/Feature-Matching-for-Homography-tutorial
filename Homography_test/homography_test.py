@@ -5,9 +5,8 @@
     (ref) https://www.geeksforgeeks.org/python-opencv-object-tracking-using-homography/
 """
 
-
-
 #%% 
+from pathlib import Path
 import sys 
 import os 
 import os.path as osp 
@@ -22,8 +21,8 @@ from colorama import Back, Style # assign color options on your text(ref) https:
 """ Path checking 
 """
 python_ver = sys.version
-script_path = osp.abspath(__file__)
-cwd = os.getcwd()
+script_path = os.path.abspath(__file__)
+cwd = Path(script_path).parent
 os.chdir(cwd) #changing working directory 
 
 print(f"Script Path: {Back.GREEN}{script_path}{Style.RESET_ALL}")
