@@ -98,7 +98,7 @@ if __name__ == '__main__':
 
     """ Image loader 
     """
-    Q_img = cv2.imread(osp.join("data", "door_query2.png"))
+    Q_img = cv2.imread(osp.join("data", "door_query3.png"))
     G_vs = cv2.VideoCapture(osp.join("data", "door_video.mp4"))    
 
 
